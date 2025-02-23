@@ -6,7 +6,7 @@ palette = [
     ("background", "white", "black", "", "white", "black"),
     ("selected", "white, bold", "dark red", "", "white, bold", "#806"),
     ("notselected", "white, bold", "black"),
-    ("hidden", "black", "black"),
+    ("hltred", "light red, bold", "black", "", "light red, bold", "black")
 ]
 
 
@@ -21,31 +21,32 @@ class MenuButton(urwid.Button):
 
 
 class MenuView():
-    def __init__(self):
-        widget = self.build()
+    def __init__(self, mainloop):
 
-        def select_on_key(key):
-            if key in {'q', 'Q'}:
-                raise urwid.ExitMainLoop
-            elif key in {'m', 'M'}:
-                self.mainloop.widget = MarkView(self.mainloop, self).build()
-            elif key in {'p', 'P'}:
-                raise NotImplementedError
-
-        self.mainloop = urwid.MainLoop(widget, palette, unhandled_input=select_on_key)
-        self.mainloop.screen.set_terminal_properties(colors=256, bright_is_bold=False)
-        self.mainloop.run()
+        self.mainloop = mainloop
+        self.parent = None
 
     def build(self):
+        """
+            Its job is to define a new widget and set mainloop to this widget.
+        """
 
         def _mark(_button):
-            self.mainloop.widget = MarkView(self.mainloop, self).build()
+            MarkView(self.mainloop, self).build()
 
         def _print(_button):
             raise NotImplementedError
 
         def _quit(_button):
-            raise urwid.ExitMainLoop
+            raise urwid.ExitMainLoop()
+
+        def select_on_key(key):
+            if key in {'q', 'Q'}:
+                raise urwid.ExitMainLoop
+            elif key in {'m', 'M'}:
+                MarkView(self.mainloop, self).build()
+            elif key in {'p', 'P'}:
+                raise NotImplementedError
 
         buttons = [
             MenuButton("[M]ark Attendance", _mark),
@@ -53,7 +54,7 @@ class MenuView():
             MenuButton("[Q]uit program", _quit),
         ]
 
-        return urwid.Overlay(
+        new_widget = urwid.Overlay(
             urwid.LineBox(
                 urwid.ListBox(
                     urwid.SimpleFocusListWalker(
@@ -85,6 +86,14 @@ class MenuView():
             min_height=9,
         )
 
+        if self.mainloop is None:
+            self.mainloop = urwid.MainLoop(new_widget, palette, unhandled_input=select_on_key)
+            self.mainloop.screen.set_terminal_properties(colors=256, bright_is_bold=False)
+            self.mainloop.run()
+
+        else:
+            self.mainloop.widget = new_widget
+
 
 class MarkView():
     def __init__(self, mainloop, parent):
@@ -92,24 +101,41 @@ class MarkView():
         self.parent = parent
 
     def back_to_parent(self, _button):
-        self.mainloop.widget = self.parent.build()
+        self.parent.build()
 
     def build(self):
-        body = [urwid.Text("Mark"), urwid.Divider()]
-        for c in {'a', 'b', 'c'}:
-            button = urwid.Button(c)
-            urwid.connect_signal(button, "click", self.back_to_parent)
-            body.append(urwid.AttrMap(button, None, focus_map="selected"))
-        return urwid.ListBox(
-            urwid.SimpleFocusListWalker(
-                body,
-                wrap_around=False
-            )
+        # Update unhandled_input
+        def select_by_key(key):
+            if key in {'q', 'Q'}:
+                raise urwid.ExitMainLoop()
+            if key == 'backspace':
+                self.parent.build()
+
+        self.mainloop.unhandled_input = select_by_key
+
+        # Return main loop widget for update
+        new_widget = urwid.Frame(
+            body=urwid.LineBox(
+                urwid.Text("hello"),
+                title="Mark attendance for which rehearsal?"
+            ),
+            footer=urwid.Text(
+                [
+                    ("background", "["),
+                    ("hltred", "Q"),
+                    ("background", "] to quit."),
+                    ("background", "["),
+                    ("hltred", "Backspace"),
+                    ("background", "] to go back."),
+                ]
+            ),
         )
+
+        self.mainloop.widget = new_widget
 
 
 def main():
-    MenuView()
+    MenuView(None).build()
 
 
 if __name__ == '__main__':
