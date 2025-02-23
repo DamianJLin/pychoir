@@ -26,6 +26,9 @@ def build_rolls(
     rehdesc,
     messagedir,
 ):
+    if messagedir is None:
+        raise NotImplementedError
+
     attendance = pl.read_csv(attfile)
 
     # Calculate the number of rehearsals attended so far
