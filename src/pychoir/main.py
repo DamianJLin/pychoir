@@ -20,28 +20,6 @@ class MenuButton(urwid.Button):
         )
 
 
-class MarkView():
-    def __init__(self, mainloop, parent):
-        self.mainloop = mainloop
-        self.parent = parent
-
-    def back_to_parent(self, _button):
-        self.mainloop.widget = self.parent.build()
-
-    def build(self):
-        body = [urwid.Text("Mark"), urwid.Divider()]
-        for c in {'a', 'b', 'c'}:
-            button = urwid.Button(c)
-            urwid.connect_signal(button, "click", self.back_to_parent)
-            body.append(urwid.AttrMap(button, None, focus_map="selected"))
-        return urwid.ListBox(
-            urwid.SimpleFocusListWalker(
-                body,
-                wrap_around=False
-            )
-        )
-
-
 class MenuView():
     def __init__(self):
         widget = self.build()
@@ -60,26 +38,26 @@ class MenuView():
 
     def build(self):
 
-        def make_mark_view(_button):
+        def _mark(_button):
             self.mainloop.widget = MarkView(self.mainloop, self).build()
 
-        operations = [
-            "[M]ark attendnace",
-            "[P]rint rolls",
-            "[Q]uit program",
+        def _print(_button):
+            raise NotImplementedError
+
+        def _quit(_button):
+            raise urwid.ExitMainLoop
+
+        buttons = [
+            MenuButton("[M]ark Attendance", _mark),
+            MenuButton("[P]rint rolls", _print),
+            MenuButton("[Q]uit program", _quit),
         ]
 
-        # body = [urwid.Text(("notselected", "Menu")), urwid.Divider()]
-        body = []
-        for o in operations:
-            button = MenuButton(o, make_mark_view)
-            # urwid.connect_signal(button, "click", make_mark_view)
-            body.append(urwid.AttrMap(button, None, focus_map="reversed"))
         return urwid.Overlay(
             urwid.LineBox(
                 urwid.ListBox(
                     urwid.SimpleFocusListWalker(
-                        body,
+                        buttons,
                         wrap_around=False
                     )
                 ),
@@ -105,6 +83,28 @@ class MenuView():
             bottom=2,
             min_width=20,
             min_height=9,
+        )
+
+
+class MarkView():
+    def __init__(self, mainloop, parent):
+        self.mainloop = mainloop
+        self.parent = parent
+
+    def back_to_parent(self, _button):
+        self.mainloop.widget = self.parent.build()
+
+    def build(self):
+        body = [urwid.Text("Mark"), urwid.Divider()]
+        for c in {'a', 'b', 'c'}:
+            button = urwid.Button(c)
+            urwid.connect_signal(button, "click", self.back_to_parent)
+            body.append(urwid.AttrMap(button, None, focus_map="selected"))
+        return urwid.ListBox(
+            urwid.SimpleFocusListWalker(
+                body,
+                wrap_around=False
+            )
         )
 
 
