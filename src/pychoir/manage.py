@@ -1,8 +1,11 @@
 import polars as pl
-import pathlib
+import random
+import os
 import readchar
 from pdfme import build_pdf
 from .build_roll import generate_section_roll
+
+alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 
 class color:
@@ -27,7 +30,21 @@ def build_rolls(
     messagedir,
 ):
     if messagedir is None:
-        raise NotImplementedError
+        # TODO: Dont use attfile.parent?
+        here = attfile.parent
+        prefix = ''.join(random.choices(alphabet, k=6))
+        name = prefix + '_message'
+        tempfile = here / name
+        systemreturn = os.system("$VISUAL " + str(tempfile))
+        if not (systemreturn == 0 and tempfile.is_file()):
+            # TODO: Work on error message.
+            raise ValueError("Error with opening file. Aborting.")
+        with open(tempfile, 'r') as fobj:
+            message = fobj.read()
+        tempfile.unlink()
+    else:
+        with open(messagedir, 'r') as m:
+            message = m.read()
 
     attendance = pl.read_csv(attfile)
 
@@ -44,8 +61,6 @@ def build_rolls(
     for secfile in sectionsdir.iterdir():
         sec = pl.read_csv(secfile)
         secattendance = attendance.filter(pl.col("id").is_in(sec)).sort("name")
-        with open(messagedir, 'r') as m:
-            message = m.read()
         roll = generate_section_roll(
             section=secfile.stem.capitalize(),
             rehid=rehid,
