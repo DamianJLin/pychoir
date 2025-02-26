@@ -39,8 +39,8 @@ def parse_args(args):
             print("roll needs at least 2 arguments.")
             exit()
         rehid = comm_args[0]
-        rehdesc = args[1].replace('_', ' ')
-        if len(args) == 3:
+        rehdesc = comm_args[1].replace('_', ' ')
+        if len(comm_args) == 3:
             messagedir = here / comm_args[2]
             if not messagedir.is_file():
                 print(f"Could not parse message, no text file at ./{messagedir.name}.")
