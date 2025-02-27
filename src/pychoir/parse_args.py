@@ -1,4 +1,5 @@
 import pathlib
+import readchar
 
 
 class RollConfig():
@@ -62,7 +63,7 @@ def parse_args(args):
         if len(comm_args) < 2:
             print("mark needs at least 2 arguments.")
             exit()
-        rehname = args[0] + '_' + args[1]
+        rehname = comm_args[0] + '_' + comm_args[1]
 
         return MarkConfig(rehname)
 
@@ -72,6 +73,16 @@ def parse_args(args):
             exit()
         fname, lname, part = comm_args
         part = part.lower()
+
+    if part not in ('soprano', 'alto', 'tenor', 'bass'):
+        print(
+            "Warning: argument SATB not one of 'soprano', 'alto', 'tenor', or 'bass'. Please"
+            " confirm [y/N]: ",
+            end=''
+        )
+        if readchar.readkey() not in ('y', 'Y'):
+            exit()
+
         return AddConfig(fname, lname, part)
 
     elif command in ('help', '-h', '--help'):
