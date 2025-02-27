@@ -13,6 +13,13 @@ class MarkConfig():
         self.rehname = rehname
 
 
+class AddConfig():
+    def __init__(self, chfname, chlname, chpart):
+        self.chfname = chfname
+        self.chlname = chlname
+        self.chpart = chpart
+
+
 def parse_args(args):
     """pychoir
 
@@ -24,11 +31,12 @@ def parse_args(args):
                                               a message if this argument is missing.
       mark <rehearsal_id> <desc>            : Record attendance in system.
       help                                  : You're already here! Prints this help string.
+      add <fname> <lname> <SATB>            : Add a chorister to the attendance list.
     """
     here = pathlib.Path.cwd()
 
     if len(args) < 2:
-        print("pychoir needs at least 1 argument")
+        print("pychoir needs at least 1 argument.")
         exit()
 
     command = args[1]
@@ -52,11 +60,19 @@ def parse_args(args):
 
     elif command == 'mark':
         if len(comm_args) < 2:
-            print("mark needs at least 2 arguments")
+            print("mark needs at least 2 arguments.")
             exit()
         rehname = args[0] + '_' + args[1]
 
         return MarkConfig(rehname)
+
+    elif command == 'add':
+        if len(comm_args) != 3:
+            print("add needs exactly 3 arguments.")
+            exit()
+        fname, lname, part = comm_args
+        part = part.lower()
+        return AddConfig(fname, lname, part)
 
     elif command in ('help', '-h', '--help'):
         print(parse_args.__doc__)

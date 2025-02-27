@@ -2,6 +2,7 @@ import polars as pl
 import random
 import os
 import readchar
+import itertools
 from pdfme import build_pdf
 from .build_roll import generate_section_roll
 
@@ -126,3 +127,46 @@ def mark_rolls(attfile, sectionsdir, rehname):
                 else:
                     continue
     attendance.write_csv(attfile)
+
+
+def add_chorister(attfile, sectionsdir, chfname, chlname, chpart):
+    attendance = pl.read_csv(attfile)
+
+    name = chlname + ", " + chfname
+
+    assigned_ids = set(attendance.get_column("id").to_list())
+    for i in itertools.count(20):
+        if i in assigned_ids:
+            continue
+        else:
+            id = i
+            break
+
+    # Update chorister list.
+    row = pl.DataFrame({"id": [id], "name": [name]})
+
+    # Argument how='diagonal' means missing columns in 'row' get null values in the concatenated
+    # frame (as opposed to erroring).
+    attendance = pl.concat([attendance, row], how='diagonal')
+    attendance.write_csv(attfile)
+
+    # Update section list
+    if chpart not in ('soprano', 'alto', 'tenor', 'bass'):
+        print(
+            "Warning: argument SATB not one of 'soprano', 'alto', 'tenor', or 'bass'. Please"
+            " confirm [y/N]:"
+        )
+        if readchar.readkey() not in ('y', 'Y'):
+            exit()
+
+    secfile = sectionsdir / (chpart + '.csv')
+
+    if secfile.is_file():
+        section = pl.read_csv(secfile)
+    else:
+        secseries = pl.Series("id", [], dtype=pl.Int64)
+        section = pl.DataFrame(secseries)
+
+    row = pl.DataFrame({"id": [id]})
+    section = pl.concat([section, row])
+    section.write_csv(secfile)

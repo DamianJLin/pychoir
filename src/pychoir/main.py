@@ -2,7 +2,7 @@ from __future__ import annotations
 from . import parse_args
 import pathlib
 import sys
-from .manage import build_rolls, mark_rolls
+from .manage import build_rolls, mark_rolls, add_chorister
 
 
 def main():
@@ -31,6 +31,15 @@ def main():
                 attfile,
                 sectionsdir,
                 config.rehname,
+            )
+
+        case parse_args.AddConfig():
+            add_chorister(
+                attfile,
+                sectionsdir,
+                config.chfname,
+                config.chlname,
+                config.chpart,
             )
 
 
