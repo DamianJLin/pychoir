@@ -74,14 +74,14 @@ def parse_args(args):
         fname, lname, part = comm_args
         part = part.lower()
 
-    if part not in ('soprano', 'alto', 'tenor', 'bass'):
-        print(
-            "Warning: argument SATB not one of 'soprano', 'alto', 'tenor', or 'bass'. Please"
-            " confirm [y/N]: ",
-            end=''
-        )
-        if readchar.readkey() not in ('y', 'Y'):
-            exit()
+        if part not in ('soprano', 'alto', 'tenor', 'bass'):
+            print(
+                "Warning: argument SATB not one of 'soprano', 'alto', 'tenor', or 'bass'. Please"
+                " confirm [y/N]: ",
+                end=''
+            )
+            if readchar.readkey() not in ('y', 'Y'):
+                exit()
 
         return AddConfig(fname, lname, part)
 
