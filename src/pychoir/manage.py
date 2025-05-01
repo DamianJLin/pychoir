@@ -22,6 +22,21 @@ class color:
     END = '\033[0m'
 
 
+def with_total_attendance(att_dframe):
+    """Calculate the number of rehearsals attended so far and return att_dframe with this column."""
+
+    # If the dframe has no rehearsal columns:
+    if att_dframe.drop("id", "name").shape[1] == 0:
+        att_dframe = att_dframe.select("id", "name")\
+            .with_columns(pl.lit(0).alias("attendance"))
+    else:
+        att_dframe = att_dframe.select("id", "name")\
+            .with_columns(
+                att_dframe.drop("id", "name").sum_horizontal().alias("attendance")
+        )
+        return att_dframe
+
+
 def build_rolls(
     attfile,
     sectionsdir,
@@ -49,15 +64,8 @@ def build_rolls(
 
     attendance = pl.read_csv(attfile)
 
-    # Calculate the number of rehearsals attended so far
-    if attendance.drop("id", "name").shape[1] == 0:
-        attendance = attendance.select("id", "name")\
-            .with_columns(pl.lit(0).alias("attendance"))
-    else:
-        attendance = attendance.select("id", "name")\
-            .with_columns(
-                attendance.drop("id", "name").sum_horizontal().alias("attendance")
-        )
+    # Calculate total attendance
+    attendance = with_total_attendance(attendance)
 
     for secfile in sectionsdir.iterdir():
         sec = pl.read_csv(secfile)
@@ -216,3 +224,30 @@ def add_chorister(attfile, sectionsdir, chfname, chlname, chpart):
 
     attendance.write_csv(attfile)
     section.write_csv(secfile)
+
+
+def export_programme(attfile, sectionsdir, progrfile, minattendance):
+    attendance = pl.read_csv(attfile)
+    attendance = with_total_attendance(attendance)
+
+    with open(progrfile, 'w') as file:
+
+        for secfile in sectionsdir.iterdir():
+            secname = secfile.stem.capitalize()
+
+            file.write('\t' + secname + ":\n")
+
+            # Filter by part and by attendance
+            sec = pl.read_csv(secfile)
+            secattendance = attendance.filter(
+                pl.col("id").is_in(sec) & (pl.col("attendance") >= minattendance)
+            ).sort("name")
+
+            # Cast to list
+            names = secattendance.get_column("name").to_list()
+
+            for n in names:
+                # Change lname, fname to fname lname
+                lname, fname = n.split(', ')
+                n = fname + ' ' + lname
+                file.write(n + '\n')

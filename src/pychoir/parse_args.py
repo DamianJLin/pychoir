@@ -21,6 +21,11 @@ class AddConfig():
         self.chpart = chpart
 
 
+class ExportProgrammeConfig():
+    def __init__(self, minattendance):
+        self.minattendance = minattendance
+
+
 def parse_args(args):
     """pychoir
 
@@ -31,8 +36,10 @@ def parse_args(args):
                                               to a file containing a text message. Will prompt for
                                               a message if this argument is missing.
       mark <rehearsal_id> <desc>            : Record attendance in system.
-      help                                  : You're already here! Prints this help string.
       add <fname> <lname> <SATB>            : Add a chorister to the attendance list.
+      export <min_att>                      : Export list of chorister with attendance greater
+                                              than <min_att>, by part, sorted by name.
+      help                                  : You're already here! Prints this help string.
     """
     here = pathlib.Path.cwd()
 
@@ -84,6 +91,18 @@ def parse_args(args):
                 exit()
 
         return AddConfig(fname, lname, part)
+
+    elif command == 'export':
+        if len(comm_args) != 1:
+            print("export should have one argument.")
+            exit()
+        minattendance, = comm_args
+        if not minattendance.isdigit():
+            print("argument <minatt> should be a natural number.")
+            exit()
+        minattendance = int(minattendance)
+
+        return ExportProgrammeConfig(minattendance)
 
     elif command in ('help', '-h', '--help'):
         print(parse_args.__doc__)

@@ -2,7 +2,7 @@ from __future__ import annotations
 from . import parse_args
 import pathlib
 import sys
-from .manage import build_rolls, mark_rolls, add_chorister
+from .manage import build_rolls, mark_rolls, add_chorister, export_programme
 
 
 def main():
@@ -12,6 +12,7 @@ def main():
     attfile = here / 'attendance.csv'
     sectionsdir = here / 'sections'
     rollsdir = here / 'rolls'
+    progrfile = here / 'programme.txt'
 
     config = parse_args.parse_args(sys.argv)
     match config:
@@ -40,6 +41,14 @@ def main():
                 config.chfname,
                 config.chlname,
                 config.chpart,
+            )
+
+        case parse_args.ExportProgrammeConfig():
+            export_programme(
+                attfile,
+                sectionsdir,
+                progrfile,
+                config.minattendance
             )
 
 
